@@ -1,0 +1,6 @@
+/build*/
+/.qtc_clangd/
+/debug/
+/release/
+
+
