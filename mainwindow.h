@@ -82,9 +82,10 @@ public:
 
     ~MainWindow();
 protected:
-    bool nativeEvent(const QByteArray &eventType, void *message,long *result)
+    bool nativeEvent(const QByteArray &eventType, void *message,long long *result)
     {
         Q_UNUSED(eventType);
+
         MSG *msg = static_cast<MSG *>(message);
         if (msg->message == WM_COPYDATA)
         {
@@ -101,7 +102,10 @@ protected:
                 return true;
             }
         }
-        return QWidget::nativeEvent(eventType, message, result);
+
+        long * newResult = (long *)result;
+
+        return QWidget::nativeEvent(eventType, message, newResult);
     }
     void closeEvent(QCloseEvent *event) override {
         event->ignore();
