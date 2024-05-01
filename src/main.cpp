@@ -1,4 +1,4 @@
-﻿#include "mainwindow.h"
+﻿#include "src/include/mainwindow.h"
 #include <QApplication>
 #include <QLocale>
 #include <QTranslator>
@@ -362,11 +362,11 @@ int main(int argc, char *argv[])
         }
     }
     QTranslator qtTranslator;
-    qtTranslator.load(":/qm/qt_zh_CN.qm");
+    qtTranslator.load(":/qm/asset/qt_zh_CN.qm");
     a.installTranslator(&qtTranslator);
 
     QTranslator qtBaseTranslator;
-    qtBaseTranslator.load(":/qm/qtbase_zh_CN.qm");
+    qtBaseTranslator.load(":/qm/asset/qtbase_zh_CN.qm");
     a.installTranslator(&qtBaseTranslator);
 
     if(!isProcessRunning("snipaste")){

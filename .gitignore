@@ -5,3 +5,5 @@
 ClipNote.pro.user
 ClipNote.pro.user.*
 .idea
+.qmake.stash
+.vscode

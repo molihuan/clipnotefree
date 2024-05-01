@@ -1,4 +1,4 @@
-﻿#include "mainwindow.h"
+﻿#include "src/include/mainwindow.h"
 #include "./ui_mainwindow.h"
 
 
@@ -11,7 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->setupUi(this);
     ui->tabWidget->setCurrentIndex(0);
-    setWindowIcon(QIcon(":/img/logo.png"));
+    setWindowIcon(QIcon(":/img/asset/logo.png"));
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
     setMaximumSize(size());
     setMinimumSize(size());
@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
         ui->lineEdit->setText(settings.value("link_style").toString());
     }
 
-    trayIcon = new QSystemTrayIcon(QIcon(":/img/logo.png"), this);
+    trayIcon = new QSystemTrayIcon(QIcon(":/img/asset/logo.png"), this);
     trayMenu = new QMenu();
     actionShow = new QAction("显示", this);
 
@@ -83,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent)
          QDir().mkpath(appDataPath);
     }
 
-    QString resourcePath = ":/db/clipnote.db";
+    QString resourcePath = ":/db/data/clipnote.db";
 
     if (!QFile::exists(destinationPath)) {
         if (QFile::copy(resourcePath, destinationPath)) {

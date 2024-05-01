@@ -6,18 +6,21 @@ TARGET=ClipNoteFree
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
-RC_ICONS = logo.ico
+RC_ICONS = asset/logo.ico
 include(QHotkey/qhotkey.pri)
 SOURCES += \
-mainwindow.cpp\
-main.cpp
+src/mainwindow.cpp\
+src/main.cpp\
+tests/test1.cpp
 
-HEADERS += mainwindow.h
+HEADERS += \
+src/include/mainwindow.h
 
-FORMS += mainwindow.ui
+FORMS += \
+src/ui/mainwindow.ui
 
 TRANSLATIONS += \
-    ClipNote_zh_CN.ts
+    asset/ClipNote_zh_CN.ts
 CONFIG += lrelease
 CONFIG += embed_translations
 
