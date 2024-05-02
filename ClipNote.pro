@@ -1,4 +1,4 @@
-QT       += core gui websockets concurrent sql
+QT       += core gui websockets concurrent sql network
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
@@ -9,12 +9,25 @@ TARGET=ClipNoteFree
 RC_ICONS = asset/logo.ico
 include(QHotkey/qhotkey.pri)
 SOURCES += \
+    src/dao/DataManager.cpp \
 src/mainwindow.cpp\
 src/main.cpp\
+    src/ocr/BaiduOcr.cpp \
+    src/ocr/BaseOcr.cpp \
+    src/utils/CommonUtil.cpp \
+    src/utils/HttpUtil.cpp \
+    src/utils/StrUtil.cpp \
 tests/test1.cpp
 
 HEADERS += \
-src/include/mainwindow.h
+    src/dao/DataManager.h \
+    src/include/Constants.h \
+src/include/mainwindow.h \
+    src/ocr/BaiduOcr.h \
+    src/ocr/BaseOcr.h \
+    src/utils/CommonUtil.h \
+    src/utils/HttpUtil.h \
+    src/utils/StrUtil.h
 
 FORMS += \
 src/ui/mainwindow.ui

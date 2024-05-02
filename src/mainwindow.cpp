@@ -1,7 +1,8 @@
 ﻿#include "src/include/mainwindow.h"
-#include "./ui_mainwindow.h"
-
-
+#include "ui_mainwindow.h"
+#include "src/include/Constants.h"
+#include "src/utils/HttpUtil.h"
+#include "src/utils/CommonUtil.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -71,11 +72,6 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     trayIcon->show();
-    download=HttpGet("Auth/getVersionFree?ver="+version);
-    qDebug()<<download;
-    if(!download.isEmpty()){
-        trayIcon->showMessage("提示", "有新版本(请点击这里跳转到下载链接)",QSystemTrayIcon::Warning,5000);
-    }
 
     QString appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     QString destinationPath = appDataPath + "/clipnote.db";
@@ -91,6 +87,38 @@ MainWindow::MainWindow(QWidget *parent)
         }
     }
 }
+
+void MainWindow::on_pushButton_4_clicked()
+{
+    QUrl url("https://qm.qq.com/cgi-bin/qm/qr?k=Bvs2uQxc0rCDzn0Wklaw76wfUdxO1dV2&jump_from=webapi&authKey=vTkp0Nojj6owKfLwmPCRWSc2qdkUzP5FLmhU9SIdkSoR8pp4i/PinyGmh5rxfO8m");
+    QDesktopServices::openUrl(url);
+
+    // 发送GET请求
+//    QMap<QString, QString> params;
+//    params["page"] = "1";
+//    HttpUtil* httpUtil = new HttpUtil(this);
+//    httpUtil->get("https://reqres.in/api/users", params);
+//    connect(httpUtil, &HttpUtil::finished,this, [](const QByteArray &data) {
+//            qDebug() << "Response:" << data;
+//    });
+
+    // 发送Post请求
+//    QJsonObject data;
+//    data["name"] = "morphe";
+//    data["job"] = "leader";
+//    HttpUtil* httpUtil = new HttpUtil(this);
+//    httpUtil->post("https://reqres.in/api/users", data);
+//    connect(httpUtil, &HttpUtil::finished,this, [](const QByteArray &data) {
+//        QJsonObject jsonObject =StrUtil::byteArrayToJsonObject(data);
+//        qDebug() << "Response:" << jsonObject["createdAt"];
+//        qDebug() << "Response:" << jsonObject["id"];
+//    });
+
+
+
+}
+
+
 void MainWindow::onNewConnection(){
     QWebSocket *client = server->nextPendingConnection();
     connect(client, &QWebSocket::textMessageReceived, this, &MainWindow::onTextMessageReceived);
@@ -127,7 +155,7 @@ void MainWindow::onTextMessageReceived(QString message){
         if(settings.value("checkBox_1").toBool()){link.replace(QRegularExpression("(\\d\\d:\\d\\d:\\d\\d)\\.\\d\\d\\d"), "\\1");}
 
         QApplication::clipboard()->setText(link);
-        simulateCtrlV();
+        CommonUtil::simulateCtrlV();
 
     }
     if(jsonObj["action"].toString()=="seek"){
@@ -150,7 +178,7 @@ void MainWindow::onTextMessageReceived(QString message){
 
             if(loaded){
                     QApplication::clipboard()->setImage(image);
-                    simulateCtrlV();
+                    CommonUtil::simulateCtrlV();
 
             }
         }
@@ -187,7 +215,7 @@ void MainWindow::onTextMessageReceived(QString message){
 
             QString data=baiduOcr(img);
             QApplication::clipboard()->setText(data);
-            simulateCtrlV();
+            CommonUtil::simulateCtrlV();
             QFile::remove(img);
 
         }
@@ -219,15 +247,6 @@ void MainWindow::broadcastMessage(QString message){
 }
 
 
-
-void MainWindow::on_pushButton_4_clicked()
-{
-    QUrl url("https://qm.qq.com/cgi-bin/qm/qr?k=Bvs2uQxc0rCDzn0Wklaw76wfUdxO1dV2&jump_from=webapi&authKey=vTkp0Nojj6owKfLwmPCRWSc2qdkUzP5FLmhU9SIdkSoR8pp4i/PinyGmh5rxfO8m");
-    QDesktopServices::openUrl(url);
-
-}
-
-
 void MainWindow::on_pushButton_9_clicked()
 {
     QUrl url(QString(host+"App/Buy?email=%1&password=%2").arg(settings.value("email").toString(),settings.value("password").toString()));
@@ -243,14 +262,6 @@ MainWindow::~MainWindow()
     delete actionShow;
     delete actionExit;
 }
-
-
-void MainWindow::on_pushButton_11_clicked()
-{
-    QUrl url("https://www.yuque.com/zhangyewuxianxiaozhang/ghzwdl/qy049zf24bq7f05v");
-    QDesktopServices::openUrl(url);
-}
-
 
 void MainWindow::on_pushButton_clicked()
 {
@@ -284,18 +295,6 @@ void MainWindow::on_pushButton_2_clicked()
 }
 
 
-void MainWindow::on_pushButton_12_clicked()
-{
-    QUrl url("https://www.yuque.com/zhangyewuxianxiaozhang/er8rsh/huntnk8a9me4iegn");
-    QDesktopServices::openUrl(url);
-}
-
-
-void MainWindow::on_pushButton_5_clicked()
-{
-       QUrl url("https://cn.bing.com/?FORM=Z9FD1&rdr=1&rdrig=6572F3EDF1E94290AB51E76419FA8310");
-       QDesktopServices::openUrl(url);
-}
 
 
 void MainWindow::on_pushButton_13_clicked()
@@ -323,7 +322,6 @@ void MainWindow::on_pushButton_14_clicked()
                                                     "选择Snipaste.exe",
                                                     "",
                                                     "可执行程序 (*.exe)");
-
     if (!fileName.isEmpty()) {
         if(!fileName.toLower().contains("snipaste")){
             QMessageBox::critical(this, "错误", "所选的不是Snipaste.exe", QMessageBox::Ok);
@@ -344,7 +342,7 @@ void MainWindow::on_lineEdit_4_textChanged(const QString &arg1)
 
 void MainWindow::on_lineEdit_5_textChanged(const QString &arg1)
 {
-settings.setValue("secret_key",arg1);
+    settings.setValue("secret_key",arg1);
 }
 
 
@@ -356,13 +354,13 @@ void MainWindow::on_lineEdit_textChanged(const QString &arg1)
 
 void MainWindow::on_checkBox_1_stateChanged(int arg1)
 {
-settings.setValue(sender()->objectName(),arg1);
+    settings.setValue(sender()->objectName(),arg1);
 }
 
 
 void MainWindow::on_checkBox_2_stateChanged(int arg1)
 {
-settings.setValue(sender()->objectName(),arg1);
+    settings.setValue(sender()->objectName(),arg1);
 }
 
 
@@ -492,20 +490,42 @@ void MainWindow::on_keySequenceEdit_12_editingFinished()
 
 void MainWindow::on_pushButton_16_clicked()
 {
-    download=HttpGet("Auth/getVersionFree?ver="+version);
+    QMap<QString, QString> params;
+    params["ver"] = Constants::APP_VERSION;
+    HttpUtil* httpUtil = new HttpUtil(this);
+    httpUtil->get(Constants::OFFICIAL_WEBSITE+"/Auth/getVersionFree", params);
+    connect(httpUtil, &HttpUtil::finished,this, [=](const QByteArray &data) {
+            qDebug() << "Response:" << data;
+            if(!data.isEmpty()){
+                trayIcon->showMessage("提示", "有新版本(请点击这里跳转到下载链接)",QSystemTrayIcon::Warning,5000);
+            }else{
+                trayIcon->showMessage("提示", "当前是最新版",QSystemTrayIcon::Warning,5000);
+            }
+    });
+}
 
-    if(!download.isEmpty()){
-        trayIcon->showMessage("提示", "有新版本(请点击这里跳转到下载链接)",QSystemTrayIcon::Warning,5000);
-    }else{
-        trayIcon->showMessage("提示", "当前是最新版",QSystemTrayIcon::Warning,5000);
-    }
+void MainWindow::on_pushButton_11_clicked()
+{
+    QString url = "https://www.yuque.com/zhangyewuxianxiaozhang/ghzwdl/qy049zf24bq7f05v";
+    CommonUtil::openUrl(url);
+}
+
+void MainWindow::on_pushButton_12_clicked()
+{
+    QString url = "https://www.yuque.com/zhangyewuxianxiaozhang/er8rsh/huntnk8a9me4iegn";
+    CommonUtil::openUrl(url);
 }
 
 
+void MainWindow::on_pushButton_5_clicked()
+{
+       QString url = "https://cn.bing.com/?FORM=Z9FD1&rdr=1&rdrig=6572F3EDF1E94290AB51E76419FA8310";
+       CommonUtil::openUrl(url);
+}
+
 void MainWindow::on_pushButton_15_clicked()
 {
-    QUrl url("https://www.yuque.com/zhangyewuxianxiaozhang/ghzwdl/befieqdxi16hbhix");
-    QDesktopServices::openUrl(url);
-
+    QString url = "https://www.yuque.com/zhangyewuxianxiaozhang/ghzwdl/befieqdxi16hbhix";
+    CommonUtil::openUrl(url);
 }
 

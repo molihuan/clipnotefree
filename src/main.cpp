@@ -20,6 +20,8 @@
 #include <QNetworkReply>
 #include <QSqlQuery>
 #include <QSqlError>
+#include "src/utils/CommonUtil.h"
+#include "src/utils/StrUtil.h"
 QString host="https://clipnote.cn/";
 QString localHost="http://127.0.0.1:5437/";
 int operation=0;
@@ -34,15 +36,19 @@ QNetworkAccessManager *networkManager;
 #ifdef Q_OS_WIN
 HWND PotPlayer();
 #endif
-QString httpGet(QString);
-QString HttpGet(QString);
-QString httpPost(QString,QByteArray);
+
 void simulateCtrlV();
 void simulateCtrlC();
 double convertTimeToSeconds(QString*);
 QString baiduOcr(QString path);
 void play();
 void pause();
+/**
+ * @brief addLink 插入数据库链接记录
+ * @param url 链接
+ * @param time 时间
+ * @return 插入记录的id
+ */
 QString addLink(QString url,QString time){
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     QString dbstring=settings.value("database",dbstr).toString();
@@ -57,6 +63,11 @@ QString addLink(QString url,QString time){
     db.close();
     return id;
 }
+/**
+ * @brief getLink 获取数据库链接记录
+ * @param id 数据id
+ * @return
+ */
 QString getLink(QString id){
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     QString dbstring=settings.value("database",dbstr).toString();
@@ -92,6 +103,7 @@ void open(QString go){
         QJsonDocument jsonDoc = QJsonDocument::fromJson(getLink(QString::number(id)).toUtf8());
         QJsonObject jsonObj=jsonDoc.object();
         link=jsonObj["url"].toString();
+        delete time; // 释放之前分配的内存
         time=new QString(jsonObj["time"].toString());
     }
 
@@ -160,7 +172,7 @@ void open(QString go){
             QUrl url(link);
             QUrlQuery query;
             query.setQuery(url.query());
-            QString cnt =QString::number(convertTimeToSeconds(&time->split("-")[0]))+"-"+QString::number(convertTimeToSeconds(&time->split("-")[1]));
+            QString cnt =QString::number(StrUtil::convertTimeToSeconds(&time->split("-")[0]))+"-"+QString::number(StrUtil::convertTimeToSeconds(&time->split("-")[1]));
             query.addQueryItem("cnt",cnt);
             url.setQuery(query);
             json["data"] =url.toString();
@@ -239,7 +251,7 @@ void open(QString go){
             QUrl url(link);
             QUrlQuery query;
             query.setQuery(url.query());
-            QString cnt =QString::number(convertTimeToSeconds(&time->split("~")[0]))+"~"+QString::number(convertTimeToSeconds(&time->split("~")[1]));
+            QString cnt =QString::number(StrUtil::convertTimeToSeconds(&time->split("~")[0]))+"~"+QString::number(StrUtil::convertTimeToSeconds(&time->split("~")[1]));
             query.addQueryItem("cnt",cnt);
             url.setQuery(query);
             json["data"] =url.toString();
@@ -300,7 +312,7 @@ void open(QString go){
             QUrl url(link);
             QUrlQuery query;
             query.setQuery(url.query());
-            QString cnt =QString::number(convertTimeToSeconds(time));
+            QString cnt =QString::number(StrUtil::convertTimeToSeconds(time));
             query.addQueryItem("cnt",cnt);
             url.setQuery(query);
             json["data"] =url.toString();
@@ -312,6 +324,7 @@ void open(QString go){
     }
     future.waitForFinished();
 }
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -368,8 +381,8 @@ int main(int argc, char *argv[])
     QTranslator qtBaseTranslator;
     qtBaseTranslator.load(":/qm/asset/qtbase_zh_CN.qm");
     a.installTranslator(&qtBaseTranslator);
-
-    if(!isProcessRunning("snipaste")){
+    //判断snipaste进程是否启动
+    if(!CommonUtil::isProcessRunning("snipaste")){
         QString executable = settings.value("snipaste").toString();
         QProcess::startDetached(executable);
     }
@@ -377,9 +390,11 @@ int main(int argc, char *argv[])
     w = new MainWindow();
     w->show();
     w->activateWindow();
+    //是否需要关闭窗口
     if(settings.value("checkBox_2").toBool()){
         w->close();
     }
+    //设置快捷健
     for(int i=1;i<=12;i++){
 
         QHotkey *key=new QHotkey(QKeySequence(settings.value("keySequenceEdit_"+QString::number(i)).toString()), true,&a);
@@ -389,19 +404,16 @@ int main(int argc, char *argv[])
         w->keyList.append(key);
     }
 #ifdef Q_OS_WIN
+    //获取句柄
     mainHwnd= reinterpret_cast<HWND>(w->winId());
 #endif
     return a.exec();
 }
 
-double convertTimeToSeconds(QString *timeStr) {
-    QTime time = QTime::fromString(*timeStr, "hh:mm:ss.zzz");
-    int hoursToSeconds = time.hour() * 3600;
-    int minutesToSeconds = time.minute() * 60;
-    int seconds = time.second();
-    int milliseconds = time.msec();
-    return hoursToSeconds + minutesToSeconds + seconds + milliseconds / 1000.0;
-}
+/**
+ * @brief 获取PotPlayer句柄
+ * @return
+ */
 #ifdef Q_OS_WIN
 HWND PotPlayer(){
     HWND hwnd = FindWindow(L"PotPlayer64", NULL);
@@ -410,66 +422,12 @@ HWND PotPlayer(){
     }
     return hwnd;
 }
+#endif
 
-#endif
-bool isProcessRunning(QString processName){
-    QProcess process;
-#ifdef Q_OS_WIN
-    process.start("tasklist");
-#else
-    process.start("pgrep", QStringList() << processName);
-#endif
-    process.waitForFinished();
-    QString output = process.readAllStandardOutput();
-    return output.toLower().contains(processName);
-}
-void simulateCtrlV()
-{
-#ifdef Q_OS_WIN
-    INPUT inputs[4] = {};
-    inputs[0].type = INPUT_KEYBOARD;
-    inputs[0].ki.wVk = VK_RCONTROL;
-    inputs[1].type = INPUT_KEYBOARD;
-    inputs[1].ki.wVk = 'V';
-    inputs[2].type = INPUT_KEYBOARD;
-    inputs[2].ki.wVk = 'V';
-    inputs[2].ki.dwFlags = KEYEVENTF_KEYUP;
-    inputs[3].type = INPUT_KEYBOARD;
-    inputs[3].ki.wVk = VK_RCONTROL;
-    inputs[3].ki.dwFlags = KEYEVENTF_KEYUP;
-    SendInput(1, &inputs[0], sizeof(INPUT));
-    QThread::msleep(100);
-    SendInput(1, &inputs[1], sizeof(INPUT));
-    SendInput(1, &inputs[2], sizeof(INPUT));
-    SendInput(1, &inputs[3], sizeof(INPUT));
-#endif
-#ifdef Q_OS_MAC
-#endif
-}
-void simulateCtrlC()
-{
-#ifdef Q_OS_WIN
-    INPUT inputs[4] = {};
-    inputs[0].type = INPUT_KEYBOARD;
-    inputs[0].ki.wVk = VK_RCONTROL;
-    inputs[1].type = INPUT_KEYBOARD;
-    inputs[1].ki.wVk = 'C';
-    inputs[2].type = INPUT_KEYBOARD;
-    inputs[2].ki.wVk = 'C';
-    inputs[2].ki.dwFlags = KEYEVENTF_KEYUP;
-    inputs[3].type = INPUT_KEYBOARD;
-    inputs[3].ki.wVk = VK_RCONTROL;
-    inputs[3].ki.dwFlags = KEYEVENTF_KEYUP;
-    SendInput(1, &inputs[0], sizeof(INPUT));
-    QThread::msleep(100);
-    SendInput(1, &inputs[1], sizeof(INPUT));
-    SendInput(1, &inputs[2], sizeof(INPUT));
-    SendInput(1, &inputs[3], sizeof(INPUT));
-#endif
-#ifdef Q_OS_MAC
-#endif
-}
-
+/**
+ * @brief action 快捷键(事件)行为处理
+ * @param index
+ */
 void action(int index){
     if(index==1){
         if(PotPlayer()){
@@ -493,7 +451,7 @@ void action(int index){
                                .replace("$path", encodedUrl);
             if(settings.value("checkBox_1").toBool()){link.replace(QRegularExpression("(\\d\\d:\\d\\d:\\d\\d)\\.\\d\\d\\d"), "\\1");}
             QApplication::clipboard()->setText(link);
-            simulateCtrlV();
+            CommonUtil::simulateCtrlV();
         }
         else{
             operation=1;
@@ -510,7 +468,7 @@ void action(int index){
             keybd_event(VK_CONTROL, 0, KEYEVENTF_EXTENDEDKEY | 0, 0);
             SendMessage(PotPlayer(), 0x0400, 0x5010, 0x43);
             keybd_event(VK_CONTROL, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
-            simulateCtrlV();
+            CommonUtil::simulateCtrlV();
 
 
         }
@@ -563,7 +521,7 @@ void action(int index){
 
                 QString data=baiduOcr(img);
                 QApplication::clipboard()->setText(data);
-                simulateCtrlV();
+                CommonUtil::simulateCtrlV();
                 QFile::remove(img);
 
 
@@ -669,6 +627,11 @@ void action(int index){
         }
     }
 }
+/**
+ * @brief isVideoLink 判断是否是视频链接
+ * @param link 链接
+ * @return
+ */
 bool isVideoLink(QString link){
     if(!link.startsWith("http")){
         QFile file(link);
@@ -698,51 +661,10 @@ bool isVideoLink(QString link){
     }
     return false;
 }
-QString httpGet(QString link){
-    QUrl url(localHost+link);
-    QNetworkRequest request(url);
-    QNetworkReply *reply = networkManager->get(request);
-    QByteArray responseData;
-    QEventLoop loop;
-    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    loop.exec();
-    if (reply->error() == QNetworkReply::NoError) {
-        responseData = reply->readAll();
-    }
-    reply->deleteLater();
-    return QString::fromUtf8(responseData);
-}
-
-QString HttpGet(QString link){
-    QUrl url(host+link);
-    QNetworkRequest request(url);
-    QNetworkReply *reply = networkManager->get(request);
-    QByteArray responseData;
-    QEventLoop loop;
-    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    loop.exec();
-    if (reply->error() == QNetworkReply::NoError) {
-        responseData = reply->readAll();
-    }
-    reply->deleteLater();
-    return QString::fromUtf8(responseData);
-}
-QString httpPost(QString link,QByteArray postData){
-    QUrl url(host+link);
-    QNetworkRequest request(url);
-     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    QNetworkReply *reply= networkManager->post(request,postData);
-    QByteArray responseData;
-    QEventLoop loop;
-    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    loop.exec();
-    if (reply->error() == QNetworkReply::NoError) {
-        responseData = reply->readAll();
-    }
-    reply->deleteLater();
-    return QString::fromUtf8(responseData);
-}
-
+/**
+ * @brief baidu_access_token 百度ocr授权token
+ * @return
+ */
 QString baidu_access_token(){
     QString api="https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=%1&client_secret=%2";
     QUrl url(api.arg(settings.value("api_key").toString(),settings.value("secret_key").toString()));
@@ -762,7 +684,10 @@ QString baidu_access_token(){
     QString accessToken=jsonObj["access_token"].toString();
     return accessToken;
 }
-
+/**
+ * @brief baiduOcr 百度ocr
+ * @return
+ */
 QString baiduOcr(QString path){
     if(settings.value("api_key").toString().isEmpty()||settings.value("secret_key").toString().isEmpty()){
         QMessageBox::critical(w, "错误", "请点击参数填写OCR接口信息", QMessageBox::Ok);

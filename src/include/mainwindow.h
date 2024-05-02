@@ -42,9 +42,6 @@ extern QString host;
 extern QString localHost;
 extern bool isVideoLink(QString);
 extern bool isProcessRunning(QString);
-extern QString httpGet(QString);
-extern QString HttpGet(QString);
-extern QString httpPost(QString,QByteArray);
 extern void openFileOrUrl(QString);
 extern int operation;
 extern void simulateCtrlV();
@@ -57,7 +54,6 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    QString version="V1.3";
     QWebSocketServer *server;
     QList<QWebSocket*> clients;
     QList<QHotkey*> keyList;
