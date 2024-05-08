@@ -4,9 +4,17 @@
 #include <QObject>
 #include <QUrl>
 #include <QDesktopServices>
-#include <qt_windows.h>
+
 #include <QThread>
 #include <QProcess>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+//#include <qt_windows.h>
+#endif
+#ifdef Q_OS_MAC
+#import <Cocoa/Cocoa.h>
+#endif
 
 
 class CommonUtil : public QObject
@@ -42,6 +50,9 @@ public:
         SendInput(1, &inputs[3], sizeof(INPUT));
 #endif
 #ifdef Q_OS_MAC
+        QKeySequence sequence = QKeySequence::Paste;
+        QGuiApplication::postEvent(QGuiApplication::focusObject(), new QKeyEvent(QEvent::KeyPress, sequence[0], Qt::NoModifier));
+        QGuiApplication::postEvent(QGuiApplication::focusObject(), new QKeyEvent(QEvent::KeyRelease, sequence[0], Qt::NoModifier));
 #endif
     }
     /**
@@ -67,6 +78,11 @@ public:
         SendInput(1, &inputs[3], sizeof(INPUT));
 #endif
 #ifdef Q_OS_MAC
+        QKeySequence copySequence = QKeySequence::Copy; // Command + C
+        int key = copySequence[0]; // 获取组合键
+        // 发送按下和释放事件
+        QGuiApplication::postEvent(QGuiApplication::focusObject(), new QKeyEvent(QEvent::KeyPress, key, Qt::MetaModifier));
+        QGuiApplication::postEvent(QGuiApplication::focusObject(), new QKeyEvent(QEvent::KeyRelease, key, Qt::MetaModifier));
 #endif
     }
 

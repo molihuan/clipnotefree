@@ -28,10 +28,20 @@
 #include <QTimer>
 #include <QJsonObject>
 #include <QJsonDocument>
-#include <qt_windows.h>
+
 #include <QCloseEvent>
 #include <QStandardPaths>
 QT_BEGIN_NAMESPACE
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+//#include <qt_windows.h>
+#endif
+#ifdef Q_OS_MAC
+#import <Cocoa/Cocoa.h>
+#endif
+
+
 namespace Ui {
 class MainWindow;
 }
@@ -80,6 +90,7 @@ public:
 protected:
     bool nativeEvent(const QByteArray &eventType, void *message,long long *result)
     {
+#ifdef Q_OS_WIN
         Q_UNUSED(eventType);
 
         MSG *msg = static_cast<MSG *>(message);
@@ -102,6 +113,18 @@ protected:
         long * newResult = (long *)result;
 
         return QWidget::nativeEvent(eventType, message, newResult);
+#endif
+#ifdef Q_OS_MAC
+        // macOS 上使用 NSAppleEventManager 处理 Apple Events
+        NSAppleEventManager *eventManager = [NSAppleEventManager sharedAppleEventManager];
+        [eventManager setEventHandler:self
+                           andSelecto: @selector(handleAppleEvent:withReplyEvent:)
+                         forEventClass:kCoreEventClass
+                            andEventID:kAEOpenDocuments];
+        return false;
+
+#endif
+
     }
     void closeEvent(QCloseEvent *event) override {
         event->ignore();
